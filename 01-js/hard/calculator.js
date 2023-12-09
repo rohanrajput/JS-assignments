@@ -16,6 +16,187 @@
   Once you've implemented the logic, test your code by running
 */
 
-class Calculator {}
+class Calculator {
+  constructor() {
+    this.result = 0;
+  }
+
+  add(x) {
+    this.result += x;
+  }
+
+  subtract(x) {
+    this.result -= x;
+  }
+
+  multiply(x) {
+    this.result *= x;
+  }
+
+  divide(x) {
+    if(x===0) {
+      throw new error("Division not possible with 0");
+    }
+
+    this.result /= x;
+  }
+
+  clear() {
+    this.result = 0;
+  }
+
+  getResult() {
+    return this.result;
+  }
+
+  calculate(str) {
+    let operandStack = [];
+    let operatorStack = [];
+    let i=0;
+
+    while(i<str.length) {
+      if(isNaN(parseInt(str[i]))) {
+        if(str[i]===' ') {
+          i++;
+          continue;
+        }
+        else if(str[i]==='*' || str[i]==='/' || str[i]==='+' || str[i]==='-' || str[i]==='(' || str[i]===')') {
+          if(operatorStack.length===0) {
+            operatorStack.push(str[i]);
+          }
+          else {
+            if(str[i]==='*') {
+              while(operatorStack.length>0 && (operatorStack[operatorStack.length-1]!=='+' && operatorStack[operatorStack.length-1]!=='-' && operatorStack[operatorStack.length-1]!=='(')) {
+                const op = operatorStack.pop();
+                const op2 = operandStack.pop();
+                if(op==='/' && op2===0) {
+                  throw new Error("Divison not possible");
+                }
+                const op1 = operandStack.pop();
+                this.result = op1;
+                this.divide(op2);
+                operandStack.push(this.getResult());
+              }
+              operatorStack.push(str[i]);
+            }
+            else if(str[i]==='/') {
+              while(operatorStack.length>0 && (operatorStack[operatorStack.length-1]!=='+' && operatorStack[operatorStack.length-1]!=='-' && operatorStack[operatorStack.length-1]!=='(')) {
+                const op = operatorStack.pop();
+                const op2 = operandStack.pop();
+                const op1 = operandStack.pop();
+                this.result = op1;
+                this.multiply(op2);
+                operandStack.push(this.getResult());
+              }
+              operatorStack.push(str[i]);
+            }
+            else if(str[i]==='+' || str[i]==='-') {
+              while(operatorStack.length>0 && operatorStack[operatorStack.length-1]!=='(') {
+                const op = operatorStack.pop();
+                const op2 = operandStack.pop();
+                const op1 = operandStack.pop();
+                this.result = op1;
+                if(op==='*') {
+                  this.multiply(op2);
+                }
+                else if(op==='+') {
+                  this.add(op2);
+                }
+                else if(op==='-') {
+                  this.subtract(op2);
+                }
+                else {
+                  this.divide(op2);
+                }
+                operandStack.push(this.getResult());
+              }
+              operatorStack.push(str[i]);
+            }
+            else if(str[i]===')') {
+              while(operatorStack.length>0 && operatorStack[operatorStack.length-1]!=='(') {
+                const op = operatorStack.pop();
+                const op2 = operandStack.pop();
+                const op1 = operandStack.pop();
+                this.result = op1;
+                if(op==='+') {
+                  this.add(op2);
+                }
+                else if(op==='-') {
+                  this.subtract(op2);
+                }
+                else if(op==='*') {
+                  this.multiply(op2);
+                }
+                else if(op==='/') {
+                  if(op2===0) {
+                    throw new error("Division by zero not possible");
+                  }
+                  else {
+                    this.divide(op2);
+                  }
+                }
+                operandStack.push(this.getResult());
+              }
+              if(operatorStack.length===0) {
+                throw new error("Mismatched parentheses");
+              }
+              if(operatorStack[operatorStack.length-1]==='(') {
+                operatorStack.pop();
+              }
+            }
+            else if(str[i]==='(') {
+              operatorStack.push(str[i]);
+            }
+          }
+          i++;
+        }
+        else {
+          throw new error("Not a number, calculation not possible");
+        }
+      }
+      else {
+        let s = "";
+        while(!isNaN(parseInt(str[i])) || str[i]==='.') {
+          s+=str[i++];
+        }
+        if(s.includes('.')) {
+          operandStack.push(parseFloat(s));
+        }
+        else {
+          operandStack.push(parseInt(s));
+        }
+      }
+    }
+
+    while(operatorStack.length!=0) {
+      const op = operatorStack.pop();
+      const op2 = operandStack.pop();
+      const op1 = operandStack.pop();
+      this.result = op1;
+      if(op==='+') {
+        this.add(op2);
+      }
+      else if(op==='-') {
+        this.subtract(op2);
+      }
+      else if(op==='*') {
+        this.multiply(op2);
+      }
+      else if(op==='/') {
+        if(op2===0) {
+          throw new error("Division by zero not possible");
+        }
+        else {
+          this.divide(op2);
+        }
+      }
+      else if(op==='(') {
+        throw new error("Invalid operator");
+      }
+      operandStack.push(this.getResult());
+    }
+    return operandStack[0];
+  }
+}
 
 module.exports = Calculator;
