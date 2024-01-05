@@ -17,5 +17,46 @@ const fs = require('fs');
 const path = require('path');
 const app = express();
 
+// Task 1
+app.get('/files', function(req, res) {
+  let dirPath = './files';
+  fs.readdir(dirPath, (err, data) => {
+    if(err) {
+      console.log(`Error occurred while reading ${dirPath}:`, err);
+      return res.status(500).json({error: `Error occurred while reading ${dirPath}: ` + err})
+    }
+    else {
+      return res.status(200).json({files: data});
+    }
+  })
+})
+
+// Task 2
+app.get("/file/:filename", function(req, res) {
+  // Get the filename from the URL parameters
+  const filename = req.params.filename;
+  // Create the full file path using the base directory and the filename
+  const filePath = path.join("./files", filename);
+  // Check if the file exists
+  if(fs.existsSync(filePath)) {
+    return (fs.readFile(filePath, "utf-8", function(err, data) {
+      if(err) {
+        console.log(`Error occurred while reading ${filePath}:`, err);
+      }
+      else {
+        return res.status(200).send(data);
+      }
+    }));
+  }
+  else {
+    return res.status(404).send("File not found"); // File not found
+  }
+})
+
+app.get("*", function(req, res) {
+  return res.status(404).send("Route not found");
+})
+
+app.listen(4000);
 
 module.exports = app;

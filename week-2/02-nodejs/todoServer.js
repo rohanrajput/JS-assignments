@@ -41,9 +41,93 @@
  */
   const express = require('express');
   const bodyParser = require('body-parser');
+  const fs = require('fs');
   
   const app = express();
   
   app.use(bodyParser.json());
+
+  // Task 1
+  app.get('/todos', function(req, res) {
+    // Send back the entire todos array as json
+    fs.readFile('./todos.json', function(err, data){
+      if(err) {
+        return res.send('Error opening todos.json file', err);
+      }
+      else {
+        return res.status(200).send(JSON.parse(data));
+      }
+    })
+  })
+
+  // Task 2
+  app.get('/todos/:id', function(req, res) {
+    const requestedId = req.params['id'];
+
+    fs.readFile('./todos.json', function(err, data) {
+      if (err) throw err;
+      const todos = JSON.parse(data);
+      for(const todo of todos) {
+        if(todo.id === parseInt(requestedId)) {
+          return res.status(200).send(todo);
+        }
+      }
+      return res.status(404).send("404 Not Found");
+    });
+  })
+
+  // Task 3
+  app.post('/todos', (req, res) => {
+    const todos = JSON.parse(fs.readFileSync('./todos.json'));
+    let id;
+    if(todos.length > 0) {
+      id = Math.max(...todos.map(todo => todo.id)) + 1;
+    }
+    else {
+      id = 1;
+    }
+    const newTodo = Object.assign({}, {id}, req.body);
+    todos.push(newTodo);
+    fs.writeFileSync('./todos.json', JSON.stringify(todos));
+    return res.status(201).send({id});
+  })
+
+  // Task 4
+  app.put('/todos/:id', (req, res) => {
+    const todoId = req.params.id;
+    const todos = JSON.parse(fs.readFileSync('./todos.json'));
+    const todo = todos.find((item) => item.id === parseInt(todoId));
+    if(!todo) {
+      return res.status(404).send('404 Not Found');
+    }
+    else {
+      Object.assign(todo, req.body);
+      // fs.writeFileSync('./todos.json', JSON.stringify(todos));
+      fs.writeFile('./todos.json', JSON.stringify(todos), function(err) {
+        if(err) {
+          return res.status(500).send(err.toString());
+        }
+        return res.status(200).send("Todo updated successfully");
+      })
+    }
+  })
+
+  // Task 5
+  app.delete('/todos/:id', (req, res) => {
+    const todoId = req.params.id;
+    const todos = JSON.parse(fs.readFileSync('./todos.json'));
+    const remTodos = todos.filter((todo) => todo.id !== parseInt(todoId));
+    if(remTodos.length === todos.length) {
+      return res.status(404).send('404 Not Found');
+    }
+    fs.writeFile('./todos.json', JSON.stringify(remTodos), function(err) {
+      if(err) {
+        return res.status(500).send(err.toString())
+      }
+      return res.status(200).send("Todo found and deleted");
+    })
+  })
+
+  app.listen(4000);
   
   module.exports = app;
